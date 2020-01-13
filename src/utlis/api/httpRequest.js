@@ -1,6 +1,8 @@
 import axios from 'axios'
 import qs from 'qs';
-const httpRequest=axios.create();
+const httpRequest=axios.create({
+  timeout:60*5*1000
+});
 httpRequest.interceptors.request.use(config=>{
   console.log(config);
   if(config.headers['Content-Type']==="application/x-www-form-urlencoded"){
