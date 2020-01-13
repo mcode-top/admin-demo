@@ -7,7 +7,7 @@ httpRequest.interceptors.request.use(config=>{
     config.data=qs.stringify(config.data);
   }
   if(sessionStorage.getItem('token')){
-    config.headers['Authorization']=`Bearer ${sessionStorage.getItem('token')}`;
+    config.headers['Authorization']=sessionStorage.getItem('token');
   }
   return config;
 });
