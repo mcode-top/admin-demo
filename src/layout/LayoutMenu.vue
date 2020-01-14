@@ -7,6 +7,7 @@
       theme="dark"
       :selectedKeys="menuSelect"
       :openKeys.sync="menuSub"
+
     >
       <a-sub-menu v-for="item in menuTree" :key="item.id">
         <span slot="title"><a-icon type="appstore"/><span>{{item.title}}</span></span>
@@ -39,7 +40,6 @@
     },
     methods: {
       handleClick(e) {
-        console.log('click', e);
         const {key}=e;
         this.$router.push(this.menuSearch[key].path);
 
@@ -55,11 +55,17 @@
         this.menuSearch[item.path]=item;
       }
       //路由更改时动态绑定菜单栏位置
-      this.menuSelect=[this.menuSearch[this.$route.path].id];
-      this.menuSub=[this.menuSearch[this.$route.path].superMenuId];
+      if(this.menuSearch[this.$route.path]){
+        this.menuSelect=[this.menuSearch[this.$route.path].id];
+        this.menuSub=[this.menuSearch[this.$route.path].superMenuId];
+      }
+
       this.$router.afterEach((to, from) => {
-        this.menuSelect=[this.menuSearch[to.path].id];
-        this.menuSub=[this.menuSearch[to.path].superMenuId];
+        if(this.menuSearch[to.path]){
+          this.menuSelect=[this.menuSearch[to.path].id];
+          this.menuSub=[this.menuSearch[to.path].superMenuId];
+        }
+
       })
     },
   }
