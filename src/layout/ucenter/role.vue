@@ -1,12 +1,12 @@
 <template>
   <div id="role">
-    <div class="search-box">
+    <div class="search-box flex">
       <a-input-group compact>
         <a-select v-model="setting.type">
           <a-select-option value="name">姓名搜索</a-select-option>
           <a-select-option value="id">Id查找</a-select-option>
         </a-select>
-        <a-input style="width: 50%" v-model="setting.value" @change="onSearchChange" placeholder="输入相关信息搜索角色"/>
+        <a-input style="width: 20%" v-model="setting.value" @change="onSearchChange" placeholder="输入相关信息搜索角色"/>
         <a-popover
           title="额外筛选条件"
           trigger="click"
@@ -19,9 +19,12 @@
           </a-button>
         </a-popover>
       </a-input-group>
+      <a-button @click="addRoleVisible=true">
+        新增
+      </a-button>
     </div>
     <a-table rowKey="id"
-             :columns="columns" :rowSelection="{selectedRowKeys: selectedRowKeys, onChange: onSelectChange}"
+             :columns="columns"
              @change="onPaginationChange"
              :pagination="pagination" :dataSource="roleData" :loading="loading">
       <!--             :rowKey="record => record.login.uuid"-->
@@ -34,29 +37,35 @@
       <!--        {{name.first}} {{name.last}}-->
       <!--      </template>-->
     </a-table>
+    <cm-user-editor v-model="addRoleVisible"></cm-user-editor>
   </div>
 </template>
 
 <style scoped>
   #role {
   }
-
+  .search-box{
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 30px;
+  }
 
 </style>
 
 <script>
   import {postData} from "../../utlis/api";
   import screen from '@/components/roleScreen'
+  import userEditor from '@/components/roleUserEditor'
   import moment from 'moment';
 
   export default {
     name: "role",
     components: {
-      'cm-screen': screen
+      'cm-screen': screen,
+      'cm-user-editor': userEditor,
     },
     data() {
       return {
-        selectedRowKeys: [],
         roleData: [],
         pagination: {
           defaultPageSize: 10,
@@ -79,20 +88,25 @@
             dataIndex: "createTime"
           },
           {
-            title: "角色姓名",
+            title: "角色名",
             width: '25%',
             dataIndex: "roleName"
 
           },
           {
+            title: "角色代码",
+            width: '15%',
+            dataIndex: "roleCode"
+          },
+          {
             title: "备注",
-            width: '25%',
+            width: '20%',
             dataIndex: "remark"
 
           },
           {
             title: "操作",
-            width: '25%',
+            width: '15%',
           }
         ],
         setting: {
@@ -102,6 +116,8 @@
         },
         searchParams: [],
         onlyParams: {},
+        addRoleVisible:false,
+        updateRoleVisible:false,
       }
     },
     computed: {},
@@ -110,7 +126,7 @@
       moment,
       //搜索框改变时
       onSearchChange() {
-        setTimeout(()=>{
+        setTimeout(() => {
           let option;
           if (this.setting.type === 'name') {
             option = {
@@ -120,8 +136,8 @@
                 this.setting.value
               ]
             }
-          }else{
-            option={
+          } else {
+            option = {
               "key": "id",
               "link": "lk",
               "values": [
@@ -129,9 +145,9 @@
               ]
             }
           }
-          this.addParams('basicInfo',option);
+          this.addParams('basicInfo', option);
           this.findTable(this.pagination.defaultPageSize, this.pagination.defaultCurrent, this.searchParams);
-        },100)
+        }, 100)
         // this.removeParams('basicInfo');
 
       },
@@ -142,11 +158,6 @@
         } else {
           this.setting.visible = !this.setting.visible
         }
-      },
-      //选中复选框时
-      onSelectChange(selectedRowKeys) {
-        console.log('selectedRowKeys changed: ', selectedRowKeys);
-        this.selectedRowKeys = selectedRowKeys;
       },
       //当表格分页发生改变时
       onPaginationChange(pagination, filters, sorter) {
@@ -213,7 +224,7 @@
       },
       //添加查询数组
       addParams(key, option) {
-        if (this.onlyParams[key]!==undefined) {
+        if (this.onlyParams[key] !== undefined) {
           this.searchParams[this.onlyParams[key]] = option
         } else {
           this.onlyParams[key] = this.searchParams.length;
@@ -229,18 +240,18 @@
       },
       //清空查询数组
       clearParams(keys) {
-        if(keys && keys.length>0){
-          let temp=[];
-          let onlyTemp={};
-          keys.forEach((val,i,arr)=>{
-            if(this.onlyParams[val]){
-              onlyTemp[val]=temp.length;
+        if (keys && keys.length > 0) {
+          let temp = [];
+          let onlyTemp = {};
+          keys.forEach((val, i, arr) => {
+            if (this.onlyParams[val]) {
+              onlyTemp[val] = temp.length;
               temp.push(this.searchParams[this.onlyParams[val]]);
             }
           })
           this.onlyParams = onlyTemp;
           this.searchParams = temp;
-        }else{
+        } else {
           this.onlyParams = {};
           this.searchParams = [];
         }
