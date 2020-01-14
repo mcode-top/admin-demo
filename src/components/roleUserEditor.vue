@@ -80,7 +80,8 @@
           console.log(res);
           if(res.data.code===200){
             this.$message.success(`角色${roleName}新建成功`);
-            this.$emit('input',false)
+            this.$emit('input',false);
+            this.$emit('ok',"");
           }
           this.confirmLoading = false;
         }).catch(err=>{

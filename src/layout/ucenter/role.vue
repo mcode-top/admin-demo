@@ -27,24 +27,41 @@
              :columns="columns"
              @change="onPaginationChange"
              :pagination="pagination" :dataSource="roleData" :loading="loading">
-      <!--             :rowKey="record => record.login.uuid"-->
-      <!--             :dataSource="data"-->
-      <!--             :pagination="pagination"-->
-      <!--             :loading="loading"-->
-      <!--             @change="handleTableChange"-->
-
-      <!--      <template slot="name" slot-scope="name">-->
-      <!--        {{name.first}} {{name.last}}-->
+      <!--      <template v-for="col in ['roleName', 'roleCode', 'remark']" :slot="col" slot-scope="text, record, index">-->
+      <!--        <div :key="col">-->
+      <!--          <a-input-->
+      <!--            v-if="!record.editable"-->
+      <!--            style="margin: -5px 0"-->
+      <!--            :value="text"-->
+      <!--          />-->
+      <!--          <template v-else>{{text}}</template>-->
+      <!--        </div>-->
       <!--      </template>-->
+      <template slot="operation" slot-scope="text, record, index">
+        <div class='editable-row-operations'>
+          <a-button type="primary">
+            修改
+          </a-button>
+          <a-popconfirm title="是否删除该角色" @confirm="()=>deleteRole(record.id)" okText="是"
+                        cancelText="否">
+            <a-button type="danger">
+              删除
+            </a-button>
+          </a-popconfirm>
+
+        </div>
+      </template>
     </a-table>
-    <cm-user-editor v-model="addRoleVisible"></cm-user-editor>
+    <cm-user-editor v-model="addRoleVisible" @ok="onAddRoleOK"></cm-user-editor>
   </div>
 </template>
 
 <style scoped>
   #role {
+    overflow-y: auto;
   }
-  .search-box{
+
+  .search-box {
     justify-content: space-between;
     width: 100%;
     padding: 10px 30px;
@@ -53,7 +70,7 @@
 </style>
 
 <script>
-  import {postData} from "../../utlis/api";
+  import {deleteData, postData} from "../../utlis/api";
   import screen from '@/components/roleScreen'
   import userEditor from '@/components/roleUserEditor'
   import moment from 'moment';
@@ -65,50 +82,56 @@
       'cm-user-editor': userEditor,
     },
     data() {
+      const columns = [
+        {
+          title: "id",
+          width: '15%',
+          dataIndex: "id"
+
+        },
+        {
+          title: "创建时间",
+          width: '15%',
+          dataIndex: "createTime"
+        },
+        {
+          title: "角色名",
+          width: '25%',
+          dataIndex: "roleName",
+          scopedSlots: {customRender: 'roleName'},
+
+        },
+        {
+          title: "角色代码",
+          width: '15%',
+          dataIndex: "roleCode",
+          scopedSlots: {customRender: 'roleCode'},
+
+        },
+        {
+          title: "备注",
+          width: '20%',
+          dataIndex: "remark",
+          scopedSlots: {customRender: 'remark'},
+        },
+        {
+          title: "操作",
+          width: '15%',
+          dataIndex: 'operation',
+          scopedSlots: {customRender: 'operation'},
+        }
+      ];
       return {
         roleData: [],
         pagination: {
-          defaultPageSize: 10,
+          defaultPageSize: 7,
           current: 1,
           defaultCurrent: 1,
           total: 0,
           change: this.onPaginationChange
         },
         loading: false,
-        columns: [
-          {
-            title: "id",
-            width: '15%',
-            dataIndex: "id"
-
-          },
-          {
-            title: "创建时间",
-            width: '15%',
-            dataIndex: "createTime"
-          },
-          {
-            title: "角色名",
-            width: '25%',
-            dataIndex: "roleName"
-
-          },
-          {
-            title: "角色代码",
-            width: '15%',
-            dataIndex: "roleCode"
-          },
-          {
-            title: "备注",
-            width: '20%',
-            dataIndex: "remark"
-
-          },
-          {
-            title: "操作",
-            width: '15%',
-          }
-        ],
+        columns: columns,
         setting: {
           visible: false,
           type: "name",
@@ -116,14 +139,28 @@
         },
         searchParams: [],
         onlyParams: {},
-        addRoleVisible:false,
-        updateRoleVisible:false,
+        addRoleVisible: false,
+        updateRoleVisible: false,
       }
     },
     computed: {},
     watch: {},
     methods: {
       moment,
+      //删除角色
+      deleteRole(id) {
+        deleteData('sys/role/delete', {id}).then(res => {
+          if (res.data.code === 200) {
+            this.$message.success(`角色删除成功`);
+            this.findTable(this.pagination.defaultPageSize, this.pagination.current, this.searchParams);
+          }
+        }).catch(err => {
+          console.error(err);
+        })
+      },
+      onAddRoleOK() {
+        this.findTable(this.pagination.defaultPageSize, this.pagination.current, this.searchParams);
+      },
       //搜索框改变时
       onSearchChange() {
         setTimeout(() => {
@@ -169,14 +206,14 @@
       //筛选额外内容清空时
       onScreenReset() {
         this.onToggleSetting(false);
-        this.clearParams(['basicInfo']);
+        this.removeParams(['remark','regTime','startTime','endTime']);
         this.findTable(this.pagination.defaultPageSize, this.pagination.defaultCurrent, this.searchParams);
       },
       //筛选额外内容完成时
       onScreenOK(val) {
         this.onToggleSetting(false);
         let {remark, startTime, endTime} = val;
-        this.clearParams(['basicInfo']);
+        this.removeParams(['remark','regTime','startTime','endTime']);
         if (remark) {
           this.addParams('remark', {
             "key": "remark",
@@ -232,11 +269,21 @@
         }
       },
       //通过key删除查询数组
-      removeParams(key) {
-        if (this.onlyParams[key]) {
-          this.searchParams.splice(this.onlyParams[key], 1);
-          this.onlyParams[key] = undefined;
+      removeParams(keys) {
+        if(keys && keys.length>0){
+          keys.forEach((val,i,arr)=>{
+            if (this.onlyParams[val]) {
+              this.searchParams.splice(this.onlyParams[val], 1);
+              this.onlyParams[val] = undefined;
+            }
+          })
+        }else{
+          if (this.onlyParams[key]) {
+            this.searchParams.splice(this.onlyParams[key], 1);
+            this.onlyParams[key] = undefined;
+          }
         }
+
       },
       //清空查询数组
       clearParams(keys) {
@@ -259,18 +306,27 @@
       },
       //查找数据生成表格
       findTable(size, current, params) {
+        this.loading = true;
         postData('sys/role/page', {
           "current": current,
           "size": size,
           "params": params,
         }).then(res => {
+          this.loading = false;
+
           if (res.data.code === 200) {
             const {records, total} = res.data.data;
             this.roleData = records;
             this.pagination.current = current;
             this.pagination.total = Number(total);
           }
+        }).catch(err => {
+          console.error(err);
+          this.loading = false;
         })
+      },
+      save(e, e1, e2) {
+        console.log(e, e1, e2);
       }
     },
     created() {
