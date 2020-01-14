@@ -3,14 +3,14 @@
     <a-menu
       @click="handleClick"
       style="width: 256px"
-      :defaultSelectedKeys="['2']"
-      :openKeys.sync="openKeys"
       mode="inline"
       theme="dark"
+      :selectedKeys="menuSelect"
+      :openKeys.sync="menuSub"
     >
-      <a-sub-menu @titleClick="titleClick" v-for="(item,i) in menuTree" :key="item.idx">
+      <a-sub-menu v-for="item in menuTree" :key="item.id">
         <span slot="title"><a-icon type="appstore"/><span>{{item.title}}</span></span>
-        <a-menu-item key="5" v-for="(jtem,j) in item.children" :key="jtem.idx">{{jtem.title}}</a-menu-item>
+        <a-menu-item v-for="jtem in item.children" :key="jtem.id">{{jtem.title}}</a-menu-item>
       </a-sub-menu>
     </a-menu>
   </div>
@@ -31,33 +31,36 @@
       return {
         current: ['mail'],
         openKeys: ['sub1'],
-        menuTree: [
-          {
-            idx: 1, title: "用户中心",
-            children: [
-              {idx:1,title:"角色管理"},
-              {idx:2,title:"角色管理1"},
-              {idx:3,title:"角色管理2"},
-              {idx:4,title:"角色管理3"},
-            ]
-          },
-          {idx: 2, title: "用户中心1"},
-          {idx: 3, title: "用户中心2"},
-        ]
+        menuSearch:{},
+        menuTree:[],
+        menuSelect:[],
+        menuSub:[],
       }
     },
     methods: {
       handleClick(e) {
-        console.log('click', e)
-      },
-      titleClick(e) {
-        console.log('titleClick', e)
+        console.log('click', e);
+        const {key}=e;
+        this.$router.push(this.menuSearch[key].path);
+
       },
     },
     watch: {
-      openKeys(val) {
-        console.log('openKeys', val)
-      },
+    },
+    created() {
+      const {menuTrees,menus}=this.$store.state.userInfo;
+      this.menuTree=menuTrees;
+      for(let item of menus){
+        this.menuSearch[item.id]=item;
+        this.menuSearch[item.path]=item;
+      }
+      //路由更改时动态绑定菜单栏位置
+      this.menuSelect=[this.menuSearch[this.$route.path].id];
+      this.menuSub=[this.menuSearch[this.$route.path].superMenuId];
+      this.$router.afterEach((to, from) => {
+        this.menuSelect=[this.menuSearch[to.path].id];
+        this.menuSub=[this.menuSearch[to.path].superMenuId];
+      })
     },
   }
 </script>

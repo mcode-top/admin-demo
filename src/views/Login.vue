@@ -114,7 +114,7 @@
           if (!err) {
             const {username,password}=values;
             this.login({username,password}).then(res => {
-
+              this.$router.push('/')
             }).catch(err=>{
               this.loginLoading=false;
               this.$message.warning(err.message);

@@ -19,9 +19,18 @@ export default new Router({
       component: Layout,
       children: [
         {
-          path:"ucenter/role",
-          name:"角色管理",
-          component:role
+          path: "ucenter/role",
+          name: "用户中心",
+          component: role,
+        },
+        {
+          path: "",
+          redirect: 'ucenter/role',
+        },
+        {
+          path: "ucenter/*",
+          name: "用户中心11",
+          component: Login,
         }
       ]
     },
