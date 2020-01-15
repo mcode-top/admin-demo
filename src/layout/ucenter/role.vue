@@ -27,16 +27,6 @@
              :columns="columns"
              @change="onPaginationChange"
              :pagination="pagination" :dataSource="roleData" :loading="loading">
-      <!--      <template v-for="col in ['roleName', 'roleCode', 'remark']" :slot="col" slot-scope="text, record, index">-->
-      <!--        <div :key="col">-->
-      <!--          <a-input-->
-      <!--            v-if="!record.editable"-->
-      <!--            style="margin: -5px 0"-->
-      <!--            :value="text"-->
-      <!--          />-->
-      <!--          <template v-else>{{text}}</template>-->
-      <!--        </div>-->
-      <!--      </template>-->
       <template v-for="col in ['roleName','roleCode','remark']" :slot="col" slot-scope="text, record, index">
         <div :key="col">
           <a-input
@@ -184,36 +174,36 @@
       },
       //显示修改框
       editableShowRole(cache, index) {
-        let newData={};
-        for(let item in cache){
-          if(cache.hasOwnProperty(item)){
-            newData[item]=cache[item]
+        let newData = {};
+        for (let item in cache) {
+          if (cache.hasOwnProperty(item)) {
+            newData[item] = cache[item]
           }
         }
         this.cacheData[index] = newData;
         this.roleData[index].editable = false;
       },
       //修改框是否保存
-      editableSaveRole(values,index){
-        const {roleName,roleCode,remark,id}=values;
+      editableSaveRole(values, index) {
+        const {roleName, roleCode, remark, id} = values;
         this.loading = true;
-        putData('sys/role/update',{id,roleName,roleCode,remark}).then(res=>{
+        putData('sys/role/update', {id, roleName, roleCode, remark}).then(res => {
           this.loading = false;
-          if(res.data.code===200){
+          if (res.data.code === 200) {
             this.$message.success("修改成功");
-            this.roleData[index]=values;
+            this.roleData[index] = values;
             this.roleData[index].editable = true;
-          }else{
+          } else {
             this.$message.warning(res.data.message)
           }
-        }).catch(err=>{
+        }).catch(err => {
           this.loading = false;
           console.error(err);
         })
       },
       //取消修改框时还原
-      editableCancelRole(index){
-        this.roleData.splice(index,1,this.cacheData[index]);
+      editableCancelRole(index) {
+        this.roleData.splice(index, 1, this.cacheData[index]);
       },
       onAddRoleOK() {
         this.findTable(this.pagination.defaultPageSize, this.pagination.current, this.searchParams);
@@ -383,7 +373,7 @@
           if (res.data.code === 200) {
             const {records, total} = res.data.data;
             //初始化修改表格缓存
-            this.cacheData={};
+            this.cacheData = {};
             this.roleData = records;
             this.pagination.current = current;
             this.pagination.total = Number(total);
