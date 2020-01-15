@@ -73,26 +73,13 @@
 
 <script>
   import {mapActions} from 'vuex';
-  // import {Form, Input, Button,Icon} from 'ant-design-vue';
   //
   export default {
     name: "login",
-    // components: {
-    //   'a-form': Form,
-    //   'a-form-item': Form.Item,
-    //   'a-input': Input,
-    //   'a-button': Button,
-    //   'a-icon':Icon
-    // },
     data() {
       return {
         form: this.$form.createForm(this),
         loginLoading: false,
-        // ruleForm: {
-        //   username: "TravisChen",
-        //   password: "jjjjjj"
-        // },
-
       }
     },
     computed: {},
@@ -100,9 +87,9 @@
     methods: {
       handleSubmit(e) {
         e.preventDefault();
-        this.loginLoading = true;
         this.form.validateFields((err, values) => {
           if (!err) {
+            this.loginLoading = true;
             const {username, password} = values;
             this.login({username, password}).then(res => {
               this.$router.push('/')

@@ -155,10 +155,15 @@
         onlyParams: {},
         addRoleVisible: false,
         updateRoleVisible: false,
+        deTime:0,
       }
     },
     computed: {},
-    watch: {},
+    watch: {
+      'setting.type': function (newData) {
+        this.onSearchChange();
+      }
+    },
     methods: {
       moment,
       //删除角色
@@ -205,6 +210,7 @@
       editableCancelRole(index) {
         this.roleData.splice(index, 1, this.cacheData[index]);
       },
+      //确定增加角色
       onAddRoleOK() {
         this.findTable(this.pagination.defaultPageSize, this.pagination.current, this.searchParams);
       },
@@ -247,7 +253,7 @@
       onPaginationChange(pagination, filters, sorter) {
         const {current} = pagination;
         console.log(pagination, filters, sorter);
-        this.findTable(this.pagination.defaultPageSize, current);
+        this.findTable(this.pagination.defaultPageSize, current,this.searchParams);
 
       },
       //筛选额外内容清空时
@@ -357,35 +363,46 @@
       //查找数据生成表格
       findTable(size, current, params) {
         this.loading = true;
-        postData('sys/role/page', {
-          "current": current,
-          "size": size,
-          "params": params,
-          "order": [
-            {
-              key: 'createTime',
-              asc: false
-            }
-          ]
-        }).then(res => {
-          this.loading = false;
+        // const values={size, current, params};
+        const getTable=()=>{
+          postData('sys/role/page', {
+            "current": current,
+            "size": size,
+            "params": params,
+            "order": [
+              {
+                key: 'createTime',
+                asc: false
+              }
+            ]
+          }).then(res => {
+            this.loading = false;
 
-          if (res.data.code === 200) {
-            const {records, total} = res.data.data;
-            //初始化修改表格缓存
-            this.cacheData = {};
-            this.roleData = records;
-            this.pagination.current = current;
-            this.pagination.total = Number(total);
-          }
-        }).catch(err => {
-          console.error(err);
-          this.loading = false;
-        })
+            if (res.data.code === 200) {
+              const {records, total} = res.data.data;
+              //初始化修改表格缓存
+              this.cacheData = {};
+              this.roleData = records;
+              this.pagination.current = current;
+              this.pagination.total = Number(total);
+            }
+          }).catch(err => {
+            console.error(err);
+            this.loading = false;
+          });
+        };
+        if(this.deTime){
+          clearTimeout(this.deTime);
+          this.deTime=setTimeout(()=>{
+            getTable();
+            this.deTime=0;
+          },500);
+        }else{
+          this.deTime=1;
+          getTable();
+        }
+
       },
-      save(e, e1, e2) {
-        console.log(e, e1, e2);
-      }
     },
     created() {
       this.findTable(this.pagination.defaultPageSize, this.pagination.defaultCurrent);
