@@ -11,6 +11,31 @@ Vue.use(antDesign);
 Vue.config.productionTip = false;
 /* eslint-disable no-new */
 
+//默认缓存登入
+router.beforeEach((to,from,next)=>{
+  if(to.path==='/login'){
+    next()
+  }else{
+    if(!store.state.token){
+      let userInfo=sessionStorage.getItem('userInfo');
+      if(userInfo){
+        const {username,password}=JSON.parse(userInfo);
+        store.dispatch('login',{username,password}).then(res=>{
+          next();
+        }).catch(err => {
+          next('/login');
+          console.error(err.message);
+        })
+      }else{
+        next('/login');
+      }
+    }else {
+      next();
+    }
+
+  }
+});
+
 new Vue({
   el: '#app',
   router,

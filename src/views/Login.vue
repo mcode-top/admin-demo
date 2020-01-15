@@ -3,49 +3,40 @@
     <a-form
       :form="form"
       @submit="handleSubmit"
-      id="login-form"
-    >
+      id="login-form">
       <div class="login-title">后台管理系统</div>
 
       <a-form-item>
         <a-input
           v-decorator="[
           'username',
-          { rules: [{ required: true, message: '用户名必填' }] }
-        ]"
-          placeholder="请输入用户名"
-        >
+          { rules: [{ required: true, message: '用户名必填' }] }   ]"
+          placeholder="请输入用户名">
           <a-icon
             slot="prefix"
             type="user"
-            style="color: rgba(0,0,0,.25)"
-          />
+            style="color: rgba(0,0,0,.25)"/>
         </a-input>
       </a-form-item>
       <a-form-item>
         <a-input
           v-decorator="[
           'password',
-          { rules: [{ required: true, message: '密码必填' }] }
-        ]"
+          { rules: [{ required: true, message: '密码必填' }] }        ]"
           type="password"
-          placeholder="请输入密码"
-        >
+          placeholder="请输入密码">
           <a-icon
             slot="prefix"
             type="lock"
-            style="color: rgba(0,0,0,.25)"
-          />
+            style="color: rgba(0,0,0,.25)"/>
         </a-input>
       </a-form-item>
-      <a-form-item
-      >
+      <a-form-item>
         <a-button
           type="primary"
           html-type="submit"
           block
-          :loading="loginLoading"
-        >
+          :loading="loginLoading">
           登入
         </a-button>
       </a-form-item>
@@ -96,7 +87,7 @@
     data() {
       return {
         form: this.$form.createForm(this),
-        loginLoading:false,
+        loginLoading: false,
         // ruleForm: {
         //   username: "TravisChen",
         //   password: "jjjjjj"
@@ -107,16 +98,16 @@
     computed: {},
     watch: {},
     methods: {
-      handleSubmit  (e) {
+      handleSubmit(e) {
         e.preventDefault();
-        this.loginLoading=true;
+        this.loginLoading = true;
         this.form.validateFields((err, values) => {
           if (!err) {
-            const {username,password}=values;
-            this.login({username,password}).then(res => {
+            const {username, password} = values;
+            this.login({username, password}).then(res => {
               this.$router.push('/')
-            }).catch(err=>{
-              this.loginLoading=false;
+            }).catch(err => {
+              this.loginLoading = false;
               this.$message.warning(err.message);
             })
           }

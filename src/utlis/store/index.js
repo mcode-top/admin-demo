@@ -26,6 +26,7 @@ const store = new Vuex.Store({
           }).then(res => {
           if(res.data.code===200){
             let data=res.data.data;
+            sessionStorage.setItem('userInfo', JSON.stringify(data));
             commit('SET_TOKEN', data['token']);
             commit('SET_USERINFO', data);
             resolve(data);

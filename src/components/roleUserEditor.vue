@@ -82,6 +82,8 @@
             this.$message.success(`角色${roleName}新建成功`);
             this.$emit('input',false);
             this.$emit('ok',"");
+          }else{
+            this.$message.warning(res.data.message);
           }
           this.confirmLoading = false;
         }).catch(err=>{

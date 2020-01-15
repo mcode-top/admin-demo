@@ -37,18 +37,41 @@
       <!--          <template v-else>{{text}}</template>-->
       <!--        </div>-->
       <!--      </template>-->
+      <template v-for="col in ['roleName','roleCode','remark']" :slot="col" slot-scope="text, record, index">
+        <div :key="col">
+          <a-input
+            v-if="!record.editable"
+            style="margin: -5px 0"
+            v-model="text"
+            @change="e => onTableItemChange(e.target.value, index, col)"
+          />
+          <template v-else>{{text}}</template>
+        </div>
+      </template>
       <template slot="operation" slot-scope="text, record, index">
-        <div class='editable-row-operations'>
-          <a-button type="primary">
+        <div class='editable-row-operations' v-if="record.editable">
+          <a-button type="primary" @click="()=>editableShowRole(record,index)">
             修改
           </a-button>
           <a-popconfirm title="是否删除该角色" @confirm="()=>deleteRole(record.id)" okText="是"
                         cancelText="否">
-            <a-button type="danger">
+            <a-button type="danger" :disabled="!record.deletable">
               删除
             </a-button>
           </a-popconfirm>
+        </div>
+        <!--修改时-->
+        <div class='editable-row-operations' v-else>
+          <a-popconfirm title="是否修改该角色" @confirm="()=>editableSaveRole(record,index)" okText="是"
+                        cancelText="否">
+            <a-button type="primary">
+              确定
+            </a-button>
+          </a-popconfirm>
 
+          <a-button type="danger" @click="()=>editableCancelRole(index)">
+            取消
+          </a-button>
         </div>
       </template>
     </a-table>
@@ -70,7 +93,7 @@
 </style>
 
 <script>
-  import {deleteData, postData} from "../../utlis/api";
+  import {deleteData, postData, putData} from "../../utlis/api";
   import screen from '@/components/roleScreen'
   import userEditor from '@/components/roleUserEditor'
   import moment from 'moment';
@@ -123,6 +146,7 @@
       ];
       return {
         roleData: [],
+        cacheData: {},
         pagination: {
           defaultPageSize: 7,
           current: 1,
@@ -157,6 +181,39 @@
         }).catch(err => {
           console.error(err);
         })
+      },
+      //显示修改框
+      editableShowRole(cache, index) {
+        let newData={};
+        for(let item in cache){
+          if(cache.hasOwnProperty(item)){
+            newData[item]=cache[item]
+          }
+        }
+        this.cacheData[index] = newData;
+        this.roleData[index].editable = false;
+      },
+      //修改框是否保存
+      editableSaveRole(values,index){
+        const {roleName,roleCode,remark,id}=values;
+        this.loading = true;
+        putData('sys/role/update',{id,roleName,roleCode,remark}).then(res=>{
+          this.loading = false;
+          if(res.data.code===200){
+            this.$message.success("修改成功");
+            this.roleData[index]=values;
+            this.roleData[index].editable = true;
+          }else{
+            this.$message.warning(res.data.message)
+          }
+        }).catch(err=>{
+          this.loading = false;
+          console.error(err);
+        })
+      },
+      //取消修改框时还原
+      editableCancelRole(index){
+        this.roleData.splice(index,1,this.cacheData[index]);
       },
       onAddRoleOK() {
         this.findTable(this.pagination.defaultPageSize, this.pagination.current, this.searchParams);
@@ -206,14 +263,14 @@
       //筛选额外内容清空时
       onScreenReset() {
         this.onToggleSetting(false);
-        this.removeParams(['remark','regTime','startTime','endTime']);
+        this.removeParams(['remark', 'regTime', 'startTime', 'endTime']);
         this.findTable(this.pagination.defaultPageSize, this.pagination.defaultCurrent, this.searchParams);
       },
       //筛选额外内容完成时
       onScreenOK(val) {
         this.onToggleSetting(false);
         let {remark, startTime, endTime} = val;
-        this.removeParams(['remark','regTime','startTime','endTime']);
+        this.removeParams(['remark', 'regTime', 'startTime', 'endTime']);
         if (remark) {
           this.addParams('remark', {
             "key": "remark",
@@ -259,6 +316,9 @@
         }
         this.findTable(this.pagination.defaultPageSize, this.pagination.defaultCurrent, this.searchParams);
       },
+      onTableItemChange(value, index, column) {
+        this.roleData[index][column] = value;
+      },
       //添加查询数组
       addParams(key, option) {
         if (this.onlyParams[key] !== undefined) {
@@ -270,14 +330,14 @@
       },
       //通过key删除查询数组
       removeParams(keys) {
-        if(keys && keys.length>0){
-          keys.forEach((val,i,arr)=>{
+        if (keys && keys.length > 0) {
+          keys.forEach((val, i, arr) => {
             if (this.onlyParams[val]) {
               this.searchParams.splice(this.onlyParams[val], 1);
               this.onlyParams[val] = undefined;
             }
           })
-        }else{
+        } else {
           if (this.onlyParams[key]) {
             this.searchParams.splice(this.onlyParams[key], 1);
             this.onlyParams[key] = undefined;
@@ -311,11 +371,19 @@
           "current": current,
           "size": size,
           "params": params,
+          "order": [
+            {
+              key: 'createTime',
+              asc: false
+            }
+          ]
         }).then(res => {
           this.loading = false;
 
           if (res.data.code === 200) {
             const {records, total} = res.data.data;
+            //初始化修改表格缓存
+            this.cacheData={};
             this.roleData = records;
             this.pagination.current = current;
             this.pagination.total = Number(total);
